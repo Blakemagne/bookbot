@@ -25,5 +25,5 @@ Bookbot: A Static Text Reader
             increment value + 1
 
     print f'strings for word_count
-    print f' string for character_count
+    for loop that prints count of each character
         
