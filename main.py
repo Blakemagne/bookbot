@@ -23,18 +23,20 @@ def main():
     path_to_file = "books/frankenstein.txt"
     # .txt returned as string into text
     text = read_file(path_to_file)
+    
+    # BEGIN REPORT
+    print(f"--- Begin report of {path_to_file} ---\n")
     # counts words in string from text
     word_count = count_words(text)
-    print(f"The book contains {word_count} words.")
+    print(f"The book contains {word_count} words.\n")
 
      # Count and display the frequency of each character
     char_count = count_characters(text)
-    # section header
-    print("\nCharacter frequencies:")
-    # loop through sorted dictionary, char_count and use .items() to return key-value pairs
-    for char, count in sorted(char_count.items()):
-        print(f"{char}: {count}")
 
+    # loop through sorted dictionary, char_count and use .items() to return key-value pairs
+    for char, count in sorted(char_count.items(), key=lambda item: item[1], reverse=True):
+        print(f"The '{char}' character was found {count} times.")
+    print("--- End of report ---")
 
 if __name__ == "__main__":
     main()
