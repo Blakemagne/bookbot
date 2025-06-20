@@ -15,10 +15,10 @@ BookBot is a command-line text analysis tool that provides comprehensive statist
 ### Core Analysis
 - **Word Count**: Counts the total number of words in any text file
 - **Character Frequency Analysis**: Analyzes how often each letter appears
-- **Reading Time Estimates**: Calculates time needed based on content type
+- **Reading Time Ranges**: Provides realistic time estimates with ranges
 - **Sorted Results**: Characters are displayed from most frequent to least frequent
 
-### Executive Insights (New!)
+### Executive Insights
 - **PDF Support**: Analyze O'Reilly books and technical PDFs
 - **Key Concepts Extraction**: Identifies technical terms and technologies
 - **Executive Summary**: Provides actionable insights for busy professionals
@@ -85,7 +85,8 @@ python3 pdf_transfer.py --analyze "learning python"
 ```bash
 # Quick executive analysis of a technical book
 pdf-get --analyze "system design"
-# Output: 46,006 words, 3h 50m reading time, technical content
+# Output: 46,006 words, 3h 4m - 5h 6m reading time
+# Key concepts: HTTP, API, Load Balancer, Consistency, CDN
 
 # Analyze your O'Reilly collection
 pdf-get --list                          # See all available PDFs
@@ -107,38 +108,42 @@ pdf-get --copy-all                      # Copy all PDFs for offline analysis
 ==================================================
 📊 EXECUTIVE BOOK ANALYSIS REPORT
 ==================================================
-📖 File: pdfs/learning_python.pdf
-📝 Word Count: 125,430
-⏱️  Reading Time: 10h 27m
+📖 File: pdfs/Alex Xu - System Design Interview.pdf
+📝 Word Count: 46,006
+⏱️  Reading Time: 3h 4m - 5h 6m
 
 ==================================================
 🎯 EXECUTIVE SUMMARY
 ==================================================
 • Technical content - requires focused reading time
 • Recommended for technical team members and decision makers
-• Comprehensive resource - plan multiple reading sessions
+• Concise content - can be completed in single session
+• Focused on specific technology stack
 • Contains practical examples - schedule hands-on practice time
+• Includes best practices - extract actionable guidelines
 
 ==================================================
 🔑 KEY CONCEPTS & TECHNOLOGIES
 ==================================================
-• Python
-• Django
-• Flask
+• HTTP
+• HTTPS
 • API
-• JSON
-• Database
-• Framework
-• Object
-• Function
-• Algorithm
+• Consistency
+• CDN
+• Load Balancer
+• Replication
+• Message Queue
+• Availability
+• WebSocket
 
 ==================================================
 📈 CHARACTER FREQUENCY (Top 10)
 ==================================================
-'e': 44,538
-'t': 29,493
-'a': 25,894
+'e': 29,962
+'t': 20,190
+'s': 17,697
+'i': 17,189
+'a': 16,846
 ...
 ==================================================
 ```
@@ -194,10 +199,10 @@ BookBot uses a modular design with clear separation of concerns:
 - Graceful error handling for corrupted or protected PDFs
 
 #### Smart Content Analysis
-- **Technical Content Detection**: Identifies programming languages, frameworks, APIs
-- **Concept Extraction**: Uses regex patterns and frequency analysis
-- **Reading Time Estimation**: Adjusts for technical vs. general content (200 vs 300 WPM)
-- **Executive Insights**: Generates actionable recommendations
+- **Technical Content Detection**: Weighted scoring system for accurate classification
+- **Concept Extraction**: Curated technical term matching with intelligent filtering
+- **Reading Time Ranges**: Realistic time estimates accounting for reading speed variability
+- **Executive Insights**: Generates actionable recommendations based on content analysis
 
 #### Windows/WSL Integration
 - **Desktop Discovery**: Scans multiple OneDrive configurations automatically
@@ -256,18 +261,20 @@ BookBot uses a modular design with clear separation of concerns:
 ## Technical Details
 
 ### Dependencies
-- Python 3.x (tested with Python 3.8+)
-- No external packages required
+- **Core:** Python 3.8+ (no external packages for basic text analysis)
+- **PDF Support:** pdfplumber, pillow, nltk (auto-installed via `./install.sh`)
+- **Environment:** Virtual environment isolation for clean dependency management
 
 ### Performance
-- Memory usage: Loads entire file into memory (suitable for books up to ~100MB)
-- Time complexity: O(n) where n is the number of characters in the text
-- Space complexity: O(k) where k is the number of unique characters
+- **Memory usage:** Loads entire file into memory (suitable for books up to ~100MB)
+- **Analysis speed:** Optimized with curated technical term matching
+- **PDF processing:** Efficient page-by-page text extraction
+- **Cross-platform:** Seamless Windows/WSL file system integration
 
 ### File Format Support
-- Plain text files (.txt)
-- UTF-8 encoding recommended
-- Handles various character sets including accented characters
+- **Text files:** .txt with UTF-8 encoding (handles international characters)
+- **PDF files:** Technical books, O'Reilly publications, academic papers
+- **Robust parsing:** Handles complex PDF layouts and formatting
 
 ## Learning Objectives
 

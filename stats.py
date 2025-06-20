@@ -16,7 +16,6 @@ Functions:
 """
 
 import re
-from collections import Counter
 
 
 def get_num_words(text):
@@ -145,152 +144,184 @@ def chars_dict_to_sorted_list(num_chars_dict):
 
 def estimate_reading_time(text):
     """
-    Estimates reading time based on average reading speed.
+    Estimates reading time range based on reading speed variability and content complexity.
     
     Args:
         text (str): The text to analyze
         
     Returns:
-        str: Formatted reading time estimate
+        str: Formatted reading time range (e.g., "2h 30m - 4h 15m")
     """
     word_count = get_num_words(text)
     
-    # Average reading speeds (words per minute)
-    speeds = {
-        'executive': 300,    # Fast executive reading
-        'technical': 200,    # Technical material
-        'average': 250       # General reading
-    }
-    
-    # Detect if content is technical
-    is_technical = detect_technical_content(text)
-    speed = speeds['technical'] if is_technical else speeds['executive']
-    
-    minutes = word_count / speed
-    hours = int(minutes // 60)
-    remaining_minutes = int(minutes % 60)
-    
-    if hours > 0:
-        return f"{hours}h {remaining_minutes}m"
+    # Reading speed ranges for different scenarios
+    if detect_technical_content(text):
+        # Technical content: requires careful reading
+        fast_speed = 250    # Quick scan for familiar concepts  
+        slow_speed = 150    # Careful study with note-taking
     else:
-        return f"{remaining_minutes}m"
+        # General content: faster reading possible
+        fast_speed = 350    # Executive skimming
+        slow_speed = 200    # Thorough reading
+    
+    # Calculate time range
+    fast_minutes = word_count / fast_speed
+    slow_minutes = word_count / slow_speed
+    
+    # Helper function for time formatting
+    def format_time(minutes):
+        hours = int(minutes // 60)
+        mins = int(minutes % 60)
+        if hours > 0:
+            return f"{hours}h {mins}m"
+        else:
+            return f"{mins}m"
+    
+    fast_time = format_time(fast_minutes)
+    slow_time = format_time(slow_minutes)
+    
+    # Provide context-aware range
+    if abs(fast_minutes - slow_minutes) < 30:  # Less than 30 minute difference
+        avg_minutes = (fast_minutes + slow_minutes) / 2
+        return f"~{format_time(avg_minutes)}"
+    else:
+        return f"{fast_time} - {slow_time}"
 
 
 def detect_technical_content(text):
     """
-    Detects if content is technical based on keyword density.
+    Enhanced technical content detection using weighted scoring and context analysis.
     
     Args:
-        text (str): Text to analyze
+        text (str): Text to analyze for technical indicators
         
     Returns:
-        bool: True if technical content detected
+        bool: True if technical content detected, False otherwise
     """
-    technical_indicators = [
-        'api', 'framework', 'library', 'algorithm', 'database',
-        'function', 'method', 'class', 'object', 'variable',
-        'code', 'programming', 'development', 'software',
-        'python', 'javascript', 'java', 'sql', 'html', 'css'
+    # ENHANCED CONCEPT: Weighted technical indicators
+    technical_indicators = {
+        # High-weight: Very technical terms
+        'algorithm': 3, 'architecture': 3, 'scalability': 3, 'optimization': 3,
+        'implementation': 3, 'performance': 3, 'security': 3, 'protocol': 3,
+        
+        # Medium-weight: Programming and system terms  
+        'api': 2, 'framework': 2, 'library': 2, 'database': 2, 'server': 2,
+        'function': 2, 'method': 2, 'class': 2, 'object': 2, 'variable': 2,
+        'coding': 2, 'programming': 2, 'development': 2, 'software': 2,
+        
+        # Lower-weight: Common tech terms
+        'system': 1, 'network': 1, 'service': 1, 'platform': 1, 'application': 1
+    }
+    
+    # Programming languages (high weight)
+    programming_languages = [
+        'python', 'java', 'javascript', 'go', 'rust', 'sql', 'html', 'css'
     ]
     
     text_lower = text.lower()
-    matches = sum(1 for indicator in technical_indicators if indicator in text_lower)
+    score = 0
     
-    return matches >= 5  # Threshold for technical content
+    # Score based on weighted indicators
+    for term, weight in technical_indicators.items():
+        if term in text_lower:
+            score += weight
+    
+    # Bonus for programming languages
+    for lang in programming_languages:
+        if lang in text_lower:
+            score += 3
+    
+    return score >= 10  # Enhanced threshold
 
 
 def extract_key_concepts(text):
     """
-    Extracts key technical concepts and important terms from text using pattern matching.
-    
-    LEARNING NOTE: This function demonstrates advanced concepts:
-    1. Regular expressions (regex) for pattern matching
-    2. Set data structures for automatic deduplication  
-    3. Counter objects for frequency analysis
-    4. List comprehensions with filtering conditions
-    5. String manipulation and cleaning
-    6. Multiple analysis strategies combined
-    
-    This function is like having an expert skim through a technical book and
-    highlight the most important terms and technologies mentioned. It uses
-    multiple strategies to find different types of technical concepts.
+    Extracts key technical concepts with focused, high-quality filtering.
     
     Args:
         text (str): The text to analyze for key concepts
         
     Returns:
-        list: List of key concepts found in the text, sorted and limited to top 15
+        list: List of meaningful technical concepts, cleaned and deduplicated
     """
-    # BEGINNER CONCEPT: Regular expression patterns
-    # Regular expressions (regex) are patterns that match text
-    # These patterns are designed to find common technical terms
-    tech_patterns = [
-        # This pattern finds CamelCase terms like "JavaScript", "MongoDB", "GraphQL"
-        r'\b[A-Z][a-z]+(?:[A-Z][a-z]+)*\b',  
+    # Specific technical terms we want to find (curated list)
+    known_technical_terms = {
+        # System Design
+        'load balancer', 'microservice', 'monolith', 'api gateway', 'service mesh', 
+        'caching', 'sharding', 'replication', 'consistency', 'availability',
+        'cap theorem', 'horizontal scaling', 'vertical scaling',
         
-        # This pattern finds specific technical acronyms and tools
-        r'\b(?:API|REST|HTTP|JSON|XML|SQL|NoSQL|AWS|Docker|Kubernetes)\b',
+        # Databases
+        'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'dynamodb',
+        'cassandra', 'neo4j', 'rdbms', 'nosql', 'acid', 'sql',
         
-        # This pattern finds programming languages and frameworks
-        r'\b(?:Python|JavaScript|Java|React|Node\.js|Django|Flask)\b',
+        # Cloud & Infrastructure  
+        'aws', 'azure', 'gcp', 'kubernetes', 'docker', 'cloudfront', 'lambda',
+        'ec2', 's3', 'rds', 'vpc', 'cdn',
         
-        # This pattern finds multi-word technical concepts
-        r'\b(?:machine learning|artificial intelligence|data science)\b',
+        # Programming & Frameworks
+        'python', 'java', 'javascript', 'typescript', 'go', 'rust',
+        'react', 'angular', 'vue', 'spring', 'django', 'flask', 'express',
         
-        # This pattern finds methodology and process terms
-        r'\b(?:microservices|DevOps|CI/CD|agile|scrum)\b',
+        # Protocols & APIs
+        'http', 'https', 'tcp', 'udp', 'websocket', 'grpc', 'graphql', 
+        'rest', 'api', 'json', 'xml', 'oauth', 'jwt',
         
-        # This pattern finds general technical terms
-        r'\b(?:database|framework|library|algorithm|architecture)\b'
-    ]
+        # Architecture Patterns
+        'microservices', 'event driven', 'message queue', 'pub sub',
+        'circuit breaker', 'bulkhead', 'saga pattern'
+    }
     
-    # BEGINNER CONCEPT: Set data structure
-    # Sets automatically prevent duplicates - if we find "Python" multiple times,
-    # it only appears once in our final list
-    concepts = set()
+    # Terms to absolutely exclude
+    exclusions = {
+        'afterword', 'chapter', 'section', 'figure', 'table', 'page',
+        'introduction', 'conclusion', 'summary', 'appendix', 'index',
+        'users', 'user', 'data', 'system', 'service', 'web', 'store', 'drive',
+        'file', 'time', 'way', 'example', 'problem', 'solution', 'method',
+        'information', 'result', 'process', 'work', 'team', 'company'
+    }
     
-    # BEGINNER CONCEPT: Iterating over patterns and pattern matching
-    for pattern in tech_patterns:
-        # BEGINNER CONCEPT: Regular expression matching
-        # re.findall() finds all text that matches the pattern
-        # re.IGNORECASE makes it find "python", "Python", "PYTHON", etc.
-        matches = re.findall(pattern, text, re.IGNORECASE)
-        
-        # BEGINNER CONCEPT: Set operations
-        # .update() adds all the matches to our set (duplicates automatically removed)
-        concepts.update(matches)
+    text_lower = text.lower()
+    found_concepts = []
     
-    # BEGINNER CONCEPT: Finding capitalized terms (likely proper nouns)
-    # This pattern finds words that start with capital letters
-    # These are often company names, product names, or technologies
-    capitalized = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', text)
+    # 1. Find known technical terms (most reliable)
+    for term in known_technical_terms:
+        if term in text_lower:
+            # Count occurrences to gauge importance
+            count = text_lower.count(term)
+            if count >= 3:  # Must appear at least 3 times
+                # Normalize capitalization
+                if term.upper() in ['API', 'HTTP', 'HTTPS', 'TCP', 'UDP', 'SQL', 'JSON', 'XML', 'JWT', 'AWS', 'GCP', 'CDN', 'VPC', 'RDS', 'EC2', 'S3']:
+                    found_concepts.append((term.upper(), count))
+                elif term in ['nosql', 'grpc', 'graphql']:
+                    found_concepts.append((term.replace('nosql', 'NoSQL').replace('grpc', 'gRPC').replace('graphql', 'GraphQL'), count))
+                else:
+                    found_concepts.append((term.title(), count))
     
-    # BEGINNER CONCEPT: List comprehension with multiple conditions
-    # This filters the capitalized terms to keep only likely technical terms
-    tech_terms = [
-        term for term in capitalized 
-        if 2 <= len(term) <= 20                    # Reasonable length
-        and not term.lower() in ['The', 'This', 'That', 'Chapter']  # Skip common words
-    ]
+    # 2. Find technology/product names (CamelCase, specific patterns)
+    tech_names = re.findall(r'\b(?:MongoDB|PostgreSQL|MySQL|Redis|Elasticsearch|DynamoDB|Cassandra|Neo4j|CloudFront|WebSocket|JavaScript|TypeScript|Node\.js|Next\.js|Spring Boot|React Native)\b', text)
+    for name in tech_names:
+        count = text.count(name)
+        if count >= 2:
+            found_concepts.append((name, count))
     
-    # BEGINNER CONCEPT: Frequency analysis with Counter
-    # Counter counts how often each term appears
-    term_counts = Counter(tech_terms)
+    # 3. Clean and deduplicate
+    # Group similar terms and keep the best version
+    concept_groups = {}
+    for concept, count in found_concepts:
+        key = concept.lower().replace(' ', '').replace('.', '').replace('-', '')
+        if key not in concept_groups or count > concept_groups[key][1]:
+            concept_groups[key] = (concept, count)
     
-    # BEGINNER CONCEPT: Filtering by frequency
-    # .most_common(20) gets the 20 most frequent terms
-    # We only keep terms that appear at least twice (count >= 2)
-    frequent_terms = [
-        term for term, count in term_counts.most_common(20) 
-        if count >= 2
-    ]
+    # Sort by frequency and relevance
+    final_concepts = []
+    for concept, count in concept_groups.values():
+        if concept.lower() not in exclusions and len(concept) >= 3:
+            final_concepts.append((concept, count))
     
-    # Add the frequent terms to our concepts set
-    concepts.update(frequent_terms)
-    
-    # BEGINNER CONCEPT: Converting sets to sorted lists with slicing
-    # Convert set to list, sort alphabetically, and take only top 15
-    return sorted(list(concepts))[:15]  # Return top 15
+    # Sort by count (descending) and return top 10
+    final_concepts.sort(key=lambda x: x[1], reverse=True)
+    return [concept for concept, _ in final_concepts[:10]]
 
 
 def generate_executive_summary(text):
