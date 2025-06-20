@@ -4,11 +4,23 @@ BookBot is a command-line text analysis tool that provides comprehensive statist
 
 ## Features
 
+### Core Analysis
 - **Word Count**: Counts the total number of words in any text file
 - **Character Frequency Analysis**: Analyzes how often each letter appears
+- **Reading Time Estimates**: Calculates time needed based on content type
 - **Sorted Results**: Characters are displayed from most frequent to least frequent
-- **Command Line Interface**: Easy to use with any text file as input
-- **Modular Design**: Clean separation between main program logic and statistical functions
+
+### Executive Insights (New!)
+- **PDF Support**: Analyze O'Reilly books and technical PDFs
+- **Key Concepts Extraction**: Identifies technical terms and technologies
+- **Executive Summary**: Provides actionable insights for busy professionals
+- **Technical Content Detection**: Auto-detects programming/technical content
+- **Professional Reporting**: Clean, executive-friendly output format
+
+### Workflow Tools
+- **Windows/WSL Integration**: Easy PDF transfer from Windows Desktop
+- **Command Line Interface**: Easy to use with any text file or PDF
+- **Modular Design**: Clean separation between analysis and reporting
 
 ## Installation
 
@@ -18,55 +30,119 @@ BookBot is a command-line text analysis tool that provides comprehensive statist
    cd bookbot
    ```
 
-2. Ensure you have Python 3 installed on your system
+2. Install dependencies for PDF support:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-3. No additional dependencies required! BookBot uses only Python standard library.
+3. Install shell commands (optional but recommended):
+   ```bash
+   ./install.sh
+   source ~/.bashrc
+   ```
+
+4. For basic text analysis only, no additional dependencies required!
 
 ## Usage
 
-### Basic Usage
+### Shell Commands (After installing with `./install.sh`)
+
 ```bash
+# Analyze any file
+bookbot <file>
+
+# PDF management
+pdf-get --list                    # List PDFs on Windows Desktop
+pdf-get --analyze "python"        # Copy and analyze PDF
+pdf-get --copy "docker"           # Copy PDF only
+pdf-get --copy-all                # Copy all PDFs
+```
+
+### Direct Python Usage
+
+```bash
+# Text files
 python3 main.py <path_to_text_file>
+
+# PDF files  
+python3 main.py <path_to_pdf_file>
+
+# PDF transfer utility
+python3 pdf_transfer.py --list
+python3 pdf_transfer.py --analyze "learning python"
 ```
 
 ### Examples
+
 ```bash
-# Analyze Frankenstein (included)
+# Shell commands (recommended)
+bookbot books/frankenstein.txt
+bookbot pdfs/learning_python.pdf
+pdf-get --analyze "effective python"
+
+# Direct Python
 python3 main.py books/frankenstein.txt
-
-# Analyze Pride and Prejudice (if downloaded)
-python3 main.py books/prideandprejudice.txt
-
-# Analyze any text file
-python3 main.py /path/to/your/textfile.txt
+python3 pdf_transfer.py --analyze "docker handbook"
 ```
 
 ### Sample Output
+
+#### Executive Analysis Report
 ```
-============ BOOKBOT ============
-Analyzing book found at books/frankenstein.txt...
------------ Word Count ----------
-Found 75767 total words
---------- Character Count -------
-e: 44538
-t: 29493
-a: 25894
-o: 24494
+==================================================
+📊 EXECUTIVE BOOK ANALYSIS REPORT
+==================================================
+📖 File: pdfs/learning_python.pdf
+📝 Word Count: 125,430
+⏱️  Reading Time: 10h 27m
+
+==================================================
+🎯 EXECUTIVE SUMMARY
+==================================================
+• Technical content - requires focused reading time
+• Recommended for technical team members and decision makers
+• Comprehensive resource - plan multiple reading sessions
+• Contains practical examples - schedule hands-on practice time
+
+==================================================
+🔑 KEY CONCEPTS & TECHNOLOGIES
+==================================================
+• Python
+• Django
+• Flask
+• API
+• JSON
+• Database
+• Framework
+• Object
+• Function
+• Algorithm
+
+==================================================
+📈 CHARACTER FREQUENCY (Top 10)
+==================================================
+'e': 44,538
+'t': 29,493
+'a': 25,894
 ...
-============= END ===============
+==================================================
 ```
 
 ## Project Structure
 
 ```
 bookbot/
-├── main.py           # Main program entry point and user interface
-├── stats.py          # Statistical analysis functions
-├── books/            # Directory for text files (git-ignored)
+├── main.py              # Main program entry point and user interface
+├── stats.py             # Statistical analysis and executive insights
+├── pdf_transfer.py      # Windows Desktop to WSL PDF transfer utility
+├── requirements.txt     # Python dependencies for PDF support
+├── books/               # Directory for text files (git-ignored)
 │   ├── frankenstein.txt
 │   └── [other books you download]
-├── .gitignore        # Excludes books directory from version control
-└── README.md         # This file
+├── pdfs/                # Directory for PDF files (git-ignored)
+│   └── [PDF files copied from Windows Desktop]
+├── .gitignore           # Comprehensive exclusions for development
+└── README.md            # This file
 ```
 
 ## How It Works

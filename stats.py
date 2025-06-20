@@ -2,14 +2,21 @@
 Statistics Module for BookBot
 
 This module contains functions for analyzing text and generating statistics.
-It handles word counting, character frequency analysis, and data sorting.
+It handles word counting, character frequency analysis, executive insights,
+and technical concept extraction.
 
 Functions:
 - get_num_words: Counts total words in a text
 - get_chars_dict: Creates character frequency dictionary  
 - chars_dict_to_sorted_list: Converts and sorts character data
 - sort_on: Helper function for sorting by frequency
+- extract_key_concepts: Identifies technical terms and concepts
+- estimate_reading_time: Calculates reading time estimates
+- generate_executive_summary: Creates actionable insights
 """
+
+import re
+from collections import Counter
 
 
 def get_num_words(text):
@@ -134,3 +141,149 @@ def chars_dict_to_sorted_list(num_chars_dict):
     
     # Return the sorted list
     return sorted_list
+
+
+def estimate_reading_time(text):
+    """
+    Estimates reading time based on average reading speed.
+    
+    Args:
+        text (str): The text to analyze
+        
+    Returns:
+        str: Formatted reading time estimate
+    """
+    word_count = get_num_words(text)
+    
+    # Average reading speeds (words per minute)
+    speeds = {
+        'executive': 300,    # Fast executive reading
+        'technical': 200,    # Technical material
+        'average': 250       # General reading
+    }
+    
+    # Detect if content is technical
+    is_technical = detect_technical_content(text)
+    speed = speeds['technical'] if is_technical else speeds['executive']
+    
+    minutes = word_count / speed
+    hours = int(minutes // 60)
+    remaining_minutes = int(minutes % 60)
+    
+    if hours > 0:
+        return f"{hours}h {remaining_minutes}m"
+    else:
+        return f"{remaining_minutes}m"
+
+
+def detect_technical_content(text):
+    """
+    Detects if content is technical based on keyword density.
+    
+    Args:
+        text (str): Text to analyze
+        
+    Returns:
+        bool: True if technical content detected
+    """
+    technical_indicators = [
+        'api', 'framework', 'library', 'algorithm', 'database',
+        'function', 'method', 'class', 'object', 'variable',
+        'code', 'programming', 'development', 'software',
+        'python', 'javascript', 'java', 'sql', 'html', 'css'
+    ]
+    
+    text_lower = text.lower()
+    matches = sum(1 for indicator in technical_indicators if indicator in text_lower)
+    
+    return matches >= 5  # Threshold for technical content
+
+
+def extract_key_concepts(text):
+    """
+    Extracts key technical concepts and important terms from text.
+    
+    Args:
+        text (str): The text to analyze
+        
+    Returns:
+        list: List of key concepts found in the text
+    """
+    # Technical terms commonly found in O'Reilly books
+    tech_patterns = [
+        r'\b[A-Z][a-z]+(?:[A-Z][a-z]+)*\b',  # CamelCase terms
+        r'\b(?:API|REST|HTTP|JSON|XML|SQL|NoSQL|AWS|Docker|Kubernetes)\b',
+        r'\b(?:Python|JavaScript|Java|React|Node\.js|Django|Flask)\b',
+        r'\b(?:machine learning|artificial intelligence|data science)\b',
+        r'\b(?:microservices|DevOps|CI/CD|agile|scrum)\b',
+        r'\b(?:database|framework|library|algorithm|architecture)\b'
+    ]
+    
+    concepts = set()
+    
+    for pattern in tech_patterns:
+        matches = re.findall(pattern, text, re.IGNORECASE)
+        concepts.update(matches)
+    
+    # Extract capitalized terms (likely proper nouns/technologies)
+    capitalized = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', text)
+    
+    # Filter for likely technical terms (2-20 characters)
+    tech_terms = [term for term in capitalized if 2 <= len(term) <= 20 and not term.lower() in ['The', 'This', 'That', 'Chapter']]
+    
+    # Get most frequent terms
+    term_counts = Counter(tech_terms)
+    frequent_terms = [term for term, count in term_counts.most_common(20) if count >= 2]
+    
+    concepts.update(frequent_terms)
+    
+    return sorted(list(concepts))[:15]  # Return top 15
+
+
+def generate_executive_summary(text):
+    """
+    Generates executive summary with actionable insights.
+    
+    Args:
+        text (str): The text to analyze
+        
+    Returns:
+        list: List of executive insights
+    """
+    insights = []
+    
+    word_count = get_num_words(text)
+    is_technical = detect_technical_content(text)
+    concepts = extract_key_concepts(text)
+    
+    # Content type assessment
+    if is_technical:
+        insights.append("Technical content - requires focused reading time")
+        insights.append("Recommended for technical team members and decision makers")
+    else:
+        insights.append("General content - suitable for broader audience")
+    
+    # Scope assessment
+    if word_count > 100000:
+        insights.append("Comprehensive resource - plan multiple reading sessions")
+        insights.append("Consider creating team reading schedule")
+    elif word_count > 50000:
+        insights.append("Substantial content - allocate dedicated time blocks")
+    else:
+        insights.append("Concise content - can be completed in single session")
+    
+    # Technology focus
+    if len(concepts) > 10:
+        insights.append("Covers multiple technologies - good for technology overview")
+        insights.append("Identify relevant sections for your specific use case")
+    elif len(concepts) > 5:
+        insights.append("Focused on specific technology stack")
+    
+    # Implementation recommendations
+    if any(term in text.lower() for term in ['example', 'tutorial', 'how to', 'step by step']):
+        insights.append("Contains practical examples - schedule hands-on practice time")
+    
+    if any(term in text.lower() for term in ['best practice', 'pattern', 'architecture']):
+        insights.append("Includes best practices - extract actionable guidelines")
+    
+    return insights[:6]  # Return top 6 insights
