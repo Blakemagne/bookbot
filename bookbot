@@ -1,0 +1,40 @@
+#!/bin/bash
+# BookBot - Shell wrapper for book analysis
+# Usage: bookbot <file>
+#
+# LEARNING NOTE: This shell script demonstrates:
+# 1. Shebang lines for script execution
+# 2. Path resolution and symbolic link handling  
+# 3. Virtual environment activation
+# 4. Directory navigation for script portability
+# 5. Parameter passing ($@ passes all arguments)
+# 6. Conditional execution with if statements
+#
+# This script makes the Python program feel like a native Unix command
+# by handling all the setup automatically.
+
+# BEGINNER CONCEPT: Finding the script's actual location
+# readlink -f resolves symbolic links to find the real file path
+# dirname gets the directory part of the path
+# This ensures the script works even when called via symlink
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+
+# BEGINNER CONCEPT: Conditional execution with if statements
+# -d tests if a directory exists
+# This activates the Python virtual environment if it's available
+if [ -d "$SCRIPT_DIR/.venv" ]; then
+    # BEGINNER CONCEPT: Source command for environment activation
+    # 'source' runs the activation script in the current shell
+    # This gives us access to the correct Python packages
+    source "$SCRIPT_DIR/.venv/bin/activate"
+fi
+
+# BEGINNER CONCEPT: Directory navigation for relative paths
+# Change to the script's directory so relative paths work correctly
+# This ensures "books/" and "pdfs/" directories are found
+cd "$SCRIPT_DIR"
+
+# BEGINNER CONCEPT: Parameter passing with $@
+# $@ expands to all command-line arguments passed to this script
+# This allows: bookbot file.pdf → python3 main.py file.pdf
+python3 "$SCRIPT_DIR/main.py" "$@"
