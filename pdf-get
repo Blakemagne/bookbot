@@ -1,14 +1,32 @@
 #!/bin/bash
-# pdf-get - Shell wrapper for PDF transfer utility
+# pdf-get - Shell wrapper for PDF transfer utility  
 # Usage: pdf-get [options]
+#
+# LEARNING NOTE: This shell script demonstrates the same concepts as 'bookbot':
+# 1. Professional command-line tool creation
+# 2. Automatic environment setup
+# 3. Cross-platform file handling (Windows/WSL integration)
+# 4. User-friendly command interfaces
+# 5. Robust path resolution
+#
+# This script enables executives to quickly grab PDFs from their Windows
+# Desktop and analyze them with a single command like: pdf-get --analyze "docker"
 
-# Get the directory where this script is located
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# BEGINNER CONCEPT: Script location detection (same pattern as bookbot)
+# This ensures the script works from anywhere in the file system
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 
-# Check if virtual environment exists and activate it
+# BEGINNER CONCEPT: Automatic dependency management
+# The virtual environment contains all the PDF processing libraries
 if [ -d "$SCRIPT_DIR/.venv" ]; then
     source "$SCRIPT_DIR/.venv/bin/activate"
 fi
 
-# Execute the Python script with all arguments
+# BEGINNER CONCEPT: Working directory setup
+# Ensures the script can find the pdfs/ directory and other resources
+cd "$SCRIPT_DIR"
+
+# BEGINNER CONCEPT: Transparent command forwarding
+# Users don't need to know this is a Python script - it feels like a native command
+# Examples: pdf-get --list, pdf-get --analyze "python", pdf-get --copy-all
 python3 "$SCRIPT_DIR/pdf_transfer.py" "$@"

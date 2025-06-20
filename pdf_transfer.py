@@ -21,55 +21,101 @@ from pathlib import Path
 WINDOWS_DESKTOP = "/mnt/c/Users/*/Desktop"
 LOCAL_PDF_DIR = "pdfs"
 
-def get_windows_desktop_path():
+def get_windows_desktop_paths():
     """
-    Finds the Windows Desktop path in WSL environment.
+    Finds all possible Windows Desktop paths in WSL environment.
     
     Returns:
-        str: Path to Windows Desktop or None if not found
+        list: List of all valid desktop paths found
     """
     import glob
+    import os
     
-    # Common Windows user paths including Library subdirectory
-    possible_paths = [
+    # Get actual username from environment or system
+    username = os.environ.get('USER', '*')
+    
+    # Base patterns for different OneDrive configurations
+    base_patterns = [
+        f"/mnt/c/Users/{username}/Desktop",
+        f"/mnt/c/Users/{username}/OneDrive/Desktop", 
+        f"/mnt/c/Users/{username}/OneDrive - */Desktop",
         "/mnt/c/Users/*/Desktop",
-        "/mnt/c/Users/*/Desktop/Library",
-        "/mnt/c/Users/*/Desktop/library", 
         "/mnt/c/Users/*/OneDrive/Desktop",
-        "/mnt/c/Users/*/OneDrive/Desktop/Library",
-        "/mnt/c/Users/*/OneDrive/Desktop/library",
         "/mnt/c/Users/*/OneDrive - */Desktop",
-        "/mnt/c/Users/*/OneDrive - */Desktop/Library",
-        "/mnt/c/Users/*/OneDrive - */Desktop/library"
+        # Additional common patterns
+        "/mnt/c/Users/*/Documents/Desktop",
+        "/mnt/c/Users/*/Desktop - Shortcut",
     ]
     
-    for pattern in possible_paths:
-        matches = glob.glob(pattern)
-        if matches:
-            return matches[0]  # Return first match
+    # Subdirectory patterns within desktop locations
+    subdirs = ["", "/Library", "/library", "/Books", "/books", "/PDFs", "/pdfs", "/Documents"]
     
-    return None
+    # Generate all combinations
+    all_patterns = []
+    for base in base_patterns:
+        for subdir in subdirs:
+            all_patterns.append(base + subdir)
+    
+    # Find all existing paths
+    valid_paths = []
+    for pattern in all_patterns:
+        try:
+            matches = glob.glob(pattern)
+            for match in matches:
+                if os.path.isdir(match) and match not in valid_paths:
+                    valid_paths.append(match)
+        except Exception:
+            continue  # Skip invalid patterns
+    
+    return valid_paths
 
 def list_pdfs():
     """
-    Lists all PDF files found on Windows Desktop.
+    Lists all PDF files found across all Windows Desktop locations.
     
     Returns:
-        list: List of PDF file paths
+        list: List of PDF file paths with source directory info
     """
-    desktop_path = get_windows_desktop_path()
-    if not desktop_path:
-        print("❌ Windows Desktop not found in WSL environment")
+    desktop_paths = get_windows_desktop_paths()
+    if not desktop_paths:
+        print("❌ No Windows Desktop locations found in WSL environment")
+        print("💡 Searched common paths like:")
+        print("   /mnt/c/Users/*/Desktop")
+        print("   /mnt/c/Users/*/OneDrive/Desktop") 
+        print("   /mnt/c/Users/*/OneDrive - */Desktop")
         return []
     
-    pdf_files = []
-    desktop = Path(desktop_path)
+    all_pdf_files = []
+    found_locations = []
     
-    if desktop.exists():
-        pdf_files = list(desktop.glob("*.pdf"))
-        pdf_files.extend(list(desktop.glob("**/*.pdf")))  # Include all subdirectories recursively
+    for desktop_path in desktop_paths:
+        desktop = Path(desktop_path)
+        if desktop.exists():
+            # Find PDFs in this location
+            pdf_files = list(desktop.glob("*.pdf"))
+            pdf_files.extend(list(desktop.glob("**/*.pdf")))  # Include subdirectories
+            
+            if pdf_files:
+                found_locations.append(f"📁 {desktop_path} ({len(pdf_files)} PDFs)")
+                all_pdf_files.extend(pdf_files)
     
-    return pdf_files
+    # Print summary of locations searched
+    if found_locations:
+        print("🔍 Found PDFs in:")
+        for location in found_locations:
+            print(f"   {location}")
+        print()
+    
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_pdfs = []
+    for pdf in all_pdf_files:
+        pdf_key = (pdf.name, pdf.stat().st_size)  # Use name + size as unique key
+        if pdf_key not in seen:
+            seen.add(pdf_key)
+            unique_pdfs.append(pdf)
+    
+    return unique_pdfs
 
 def copy_pdf(pdf_path, destination_dir="pdfs"):
     """
@@ -109,9 +155,14 @@ def main():
     
     args = parser.parse_args()
     
+    # Manual desktop path override for testing
     if args.desktop_path:
-        global WINDOWS_DESKTOP
-        WINDOWS_DESKTOP = args.desktop_path
+        print(f"🔧 Using custom desktop path: {args.desktop_path}")
+        # Test the custom path
+        test_path = Path(args.desktop_path)
+        if not test_path.exists():
+            print(f"❌ Custom path does not exist: {args.desktop_path}")
+            return
     
     if args.list:
         print("🔍 Scanning Windows Desktop for PDFs...")
@@ -139,7 +190,7 @@ def main():
         if matching_pdf:
             copied_path = copy_pdf(matching_pdf)
             if copied_path:
-                print(f"📖 PDF ready for analysis: python3 main.py {copied_path}")
+                print(f'📖 PDF ready for analysis: python3 main.py "{copied_path}"')
         else:
             print(f"❌ PDF '{args.copy}' not found on Desktop")
             print("💡 Use --list to see available PDFs")
@@ -174,7 +225,8 @@ def main():
             copied_path = copy_pdf(matching_pdf)
             if copied_path:
                 print(f"\n🚀 Running analysis...")
-                os.system(f"python3 main.py {copied_path}")
+                # Use quotes to handle spaces in filename
+                os.system(f'python3 main.py "{copied_path}"')
         else:
             print(f"❌ PDF '{args.analyze}' not found on Desktop")
     
